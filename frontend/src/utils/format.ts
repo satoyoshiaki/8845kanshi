@@ -10,30 +10,32 @@ export function formatRate(value: number | null | undefined): string {
   return `${formatBytes(value)}/s`
 }
 
-export function formatDuration(seconds: number | null | undefined): string {
-  if (seconds == null) return 'Unavailable'
-  if (seconds < 60) return `${Math.floor(seconds)}s`
+type FormatLocale = 'ja' | 'en'
+
+export function formatDuration(seconds: number | null | undefined, locale: FormatLocale = 'en'): string {
+  if (seconds == null) return locale === 'ja' ? '取得不可' : 'Unavailable'
+  if (seconds < 60) return locale === 'ja' ? `${Math.floor(seconds)}秒` : `${Math.floor(seconds)}s`
   const minutes = Math.floor(seconds / 60)
-  if (minutes < 60) return `${minutes}m`
+  if (minutes < 60) return locale === 'ja' ? `${minutes}分` : `${minutes}m`
   const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours}h ${minutes % 60}m`
+  if (hours < 24) return locale === 'ja' ? `${hours}時間 ${minutes % 60}分` : `${hours}h ${minutes % 60}m`
   const days = Math.floor(hours / 24)
-  return `${days}d ${hours % 24}h`
+  return locale === 'ja' ? `${days}日 ${hours % 24}時間` : `${days}d ${hours % 24}h`
 }
 
-export function formatDate(value: string | null | undefined): string {
-  if (!value) return 'Unavailable'
-  return new Intl.DateTimeFormat(undefined, {
+export function formatDate(value: string | null | undefined, locale: FormatLocale = 'en'): string {
+  if (!value) return locale === 'ja' ? '取得不可' : 'Unavailable'
+  return new Intl.DateTimeFormat(locale === 'ja' ? 'ja-JP' : 'en-US', {
     dateStyle: 'medium',
     timeStyle: 'medium',
   }).format(new Date(value))
 }
 
-export function formatRelative(value: string | null | undefined): string {
-  if (!value) return 'Unavailable'
+export function formatRelative(value: string | null | undefined, locale: FormatLocale = 'en'): string {
+  if (!value) return locale === 'ja' ? '取得不可' : 'Unavailable'
   const seconds = Math.max(0, Math.floor((Date.now() - new Date(value).getTime()) / 1000))
-  if (seconds < 60) return `${seconds}s ago`
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`
-  return `${Math.floor(seconds / 86400)}d ago`
+  if (seconds < 60) return locale === 'ja' ? `${seconds}秒前` : `${seconds}s ago`
+  if (seconds < 3600) return locale === 'ja' ? `${Math.floor(seconds / 60)}分前` : `${Math.floor(seconds / 60)}m ago`
+  if (seconds < 86400) return locale === 'ja' ? `${Math.floor(seconds / 3600)}時間前` : `${Math.floor(seconds / 3600)}h ago`
+  return locale === 'ja' ? `${Math.floor(seconds / 86400)}日前` : `${Math.floor(seconds / 86400)}d ago`
 }

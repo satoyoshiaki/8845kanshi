@@ -10,6 +10,7 @@ A production-oriented, monitor-only web dashboard for an Ubuntu mini PC. It coll
 - Minecraft: online state, version, MOTD, latency, player count/names, avatars, and matching container resources
 - Codex CLI: active/idle state, PID, CPU, memory, uptime, workspace, Git branch, and recent file metadata
 - Responsive NOC interface with Skeleton loading, partial-failure states, polling, and Recharts history graphs
+- Japanese and English interface with a persistent browser-side language switcher (Japanese is the default)
 
 ## Architecture
 
@@ -38,7 +39,7 @@ The backend never mounts the Docker socket. `docker-socket-proxy` exposes only r
 
 ![8845 KANSHI desktop overview](docs/screenshots/overview-desktop.png)
 
-### Smartphone overview
+### Smartphone settings (Japanese)
 
 ![8845 KANSHI smartphone overview](docs/screenshots/overview-mobile.png)
 
@@ -62,6 +63,8 @@ docker compose up -d --build
 ```
 
 Open `http://SERVER_IP:3000`. The backend listens only on `127.0.0.1:8000` by default and is proxied through the frontend.
+
+The dashboard opens in Japanese by default. Use the language button in the top bar or the **Settings / 設定** page to switch between Japanese and English. The selection is stored only in the browser's `localStorage`.
 
 ## Configuration
 

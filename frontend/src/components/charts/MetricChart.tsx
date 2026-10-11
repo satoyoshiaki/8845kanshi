@@ -9,6 +9,7 @@ import {
 } from 'recharts'
 
 import type { HistoryPoint } from '../../types'
+import { useI18n } from '../../i18n/I18nProvider'
 
 interface Series {
   key: keyof HistoryPoint
@@ -25,9 +26,10 @@ interface MetricChartProps {
 }
 
 export function MetricChart({ data, series, formatValue = (value) => `${value.toFixed(1)}%`, domain = [0, 'auto'], height = 240 }: MetricChartProps) {
+  const { locale } = useI18n()
   const chartData = data.map((point) => ({
     ...point,
-    label: new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(new Date(point.timestamp)),
+    label: new Intl.DateTimeFormat(locale === 'ja' ? 'ja-JP' : 'en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: locale === 'en' }).format(new Date(point.timestamp)),
   }))
   return (
     <div style={{ height }} className="w-full">
