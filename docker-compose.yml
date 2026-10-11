@@ -1,0 +1,111 @@
+name: 8845kanshi
+
+services:
+  docker-socket-proxy:
+    image: tecnativa/docker-socket-proxy:0.3.0
+    container_name: kanshi-docker-proxy
+    restart: unless-stopped
+    environment:
+      CONTAINERS: 1
+      INFO: 1
+      PING: 1
+      VERSION: 1
+      POST: 0
+      AUTH: 0
+      BUILD: 0
+      COMMIT: 0
+      CONFIGS: 0
+      DISTRIBUTION: 0
+      EVENTS: 0
+      EXEC: 0
+      IMAGES: 0
+      NETWORKS: 0
+      NODES: 0
+      PLUGINS: 0
+      SECRETS: 0
+      SERVICES: 0
+      SESSION: 0
+      SWARM: 0
+      SYSTEM: 0
+      TASKS: 0
+      VOLUMES: 0
+    ports:
+      - "127.0.0.1:2375:2375"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://127.0.0.1:2375/_ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  dashboard-backend:
+    build: ./backend
+    container_name: kanshi-backend
+    restart: unless-stopped
+    network_mode: host
+    pid: host
+    user: "${PUID:-1000}:${PGID:-1000}"
+    depends_on:
+      docker-socket-proxy:
+        condition: service_healthy
+    environment:
+      BACKEND_HOST: 127.0.0.1
+      BACKEND_PORT: ${BACKEND_PORT:-8000}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+      HOST_ROOT: /host
+      HOST_HOSTNAME: ${HOST_HOSTNAME:-ubuntu-server}
+      MONITORED_MOUNTS: ${MONITORED_MOUNTS:-/}
+      DOCKER_HOST: tcp://127.0.0.1:2375
+      MINECRAFT_HOST: ${MINECRAFT_HOST:-127.0.0.1}
+      MINECRAFT_PORT: ${MINECRAFT_PORT:-25565}
+      MINECRAFT_CONTAINER_NAME: ${MINECRAFT_CONTAINER_NAME:-minecraft}
+      CODEX_WORKSPACE_ROOT: ${CODEX_WORKSPACE_ROOT:-/home}
+      REFRESH_SYSTEM_SECONDS: ${REFRESH_SYSTEM_SECONDS:-2}
+      REFRESH_DOCKER_SECONDS: ${REFRESH_DOCKER_SECONDS:-3}
+      REFRESH_MINECRAFT_SECONDS: ${REFRESH_MINECRAFT_SECONDS:-5}
+      REFRESH_CODEX_SECONDS: ${REFRESH_CODEX_SECONDS:-3}
+    volumes:
+      - /:/host:ro,rslave
+      - ${CODEX_WORKSPACE_ROOT:-/home}:${CODEX_WORKSPACE_ROOT:-/home}:ro
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:${BACKEND_PORT:-8000}/api/health', timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  dashboard-frontend:
+    build: ./frontend
+    container_name: kanshi-frontend
+    restart: unless-stopped
+    network_mode: host
+    depends_on:
+      dashboard-backend:
+        condition: service_healthy
+    environment:
+      FRONTEND_PORT: ${FRONTEND_PORT:-3000}
+      BACKEND_PORT: ${BACKEND_PORT:-8000}
+    user: "101:101"
+    read_only: true
+    tmpfs:
+      - /etc/nginx/conf.d:size=1m,mode=0755,uid=101,gid=101
+      - /var/cache/nginx:size=32m,mode=0755,uid=101,gid=101
+      - /var/run:size=8m,mode=0755,uid=101,gid=101
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://127.0.0.1:${FRONTEND_PORT:-3000}/"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
